@@ -1,0 +1,1 @@
+mc cp box/flightaware/20221020_011933.json ./
