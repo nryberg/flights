@@ -5,10 +5,24 @@ import csv
 import os
 import sys
 
-input_json_file = sys.argv[1]
+input_file_folder = sys.argv[1]
 
-full_file_name = os.path.basename(input_json_file)
+# Determine if the input file is a full path or just a file name
+if os.path.isabs(input_file_folder):
+    full_file_name = input_file_folder
+else:
+    # Iterate through the current directory and find the file
+    full_file_name = os.path.basename(input_file_folder)
+
+
 file_name = full_file_name.split('.')[0]
+
+if len(sys.argv) > 2:
+    output_file_folder = sys.argv[2]
+    output_csv_file = output_file_folder + '/' + file_name + '.csv'
+else:
+    output_csv_file = file_name + '.csv'
+
 print(os.path.basename(file_name))
 
 output_csv_file = file_name + '.csv'
