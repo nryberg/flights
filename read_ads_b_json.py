@@ -4,23 +4,21 @@ import json
 import csv
 import os
 import sys
-# import time
-# import datetime
-# import pandas as pd
-# import numpy as np
-# import matplotlib.pyplot as plt
-# import matplotlib.dates as mdates
-# import matplotlib.ticker as ticker
+
+input_json_file = sys.argv[1]
+
+full_file_name = os.path.basename(input_json_file)
+file_name = full_file_name.split('.')[0]
+print(os.path.basename(file_name))
+
+output_csv_file = file_name + '.csv'
+
 
 # Read the ads-b.json file
-def read_ads_b_json(output_csv_file):
+def read_ads_b_json(input_json_file, output_csv_file):
     # Read the ads-b.json file
-    with open('ads.json') as f:
+    with open(input_json_file) as f:
         data = json.load(f)
-
-        print(data['now'])
-        print(data['aircraft'][0]['hex'])
-
         # Loop through aircraft array
         timestamp = data['now']
         record   = []
@@ -43,7 +41,7 @@ def read_ads_b_json(output_csv_file):
             if 'alt_baro' in aircraft:
                 alt_baro = aircraft['alt_baro']
             else:
-                alt_baro = 'None'
+                alt_baro = ''
             if 'alt_geom' in aircraft:
                 alt_geom = aircraft['alt_geom']
             else:
@@ -54,11 +52,6 @@ def read_ads_b_json(output_csv_file):
             else:
                 baro_rate = ''
 
-            if 'callsign' in aircraft:
-                callsign = aircraft['callsign']
-            else:
-                callsign = ''
-            
             if 'category' in aircraft:
                 category = aircraft['category']
             else:
@@ -74,33 +67,30 @@ def read_ads_b_json(output_csv_file):
             else:
                 gs = ''
 
-            record = [timestamp, hex, flight, lat, lon, alt_baro, alt_geom, baro_rate, callsign, category, track, gs]
-            print(record)
+            record = [timestamp, hex, flight, lat, lon, alt_baro, alt_geom, baro_rate, category, track, gs]
+            
             # Write to csv file
             csv_writer = csv.writer(output_csv_file)
             csv_writer.writerow(record)
 
                 
         # print(aircraft['hex'])
-
-        
+      
 # Create output csv file
 def create_csv_file():
     f = open('ads.csv', 'w')
 
     # Write header
-    header = ['timestamp', 'hex', 'flight', 'lat', 'lon', 'alt_baro', 'alt_geom', 'baro_rate', 'callsign', 'category', 'track', 'gs']
+    header = ['timestamp', 'hex', 'flight', 'lat', 'lon', 'alt_baro', 'alt_geom', 'baro_rate', 'category', 'track', 'gs']
     csv_writer = csv.writer(f)
     csv_writer.writerow(header)
-    
+
     return f 
 
 
 output_csv_file = create_csv_file()
-read_ads_b_json(output_csv_file)
+read_ads_b_json('ads.json', output_csv_file)
 
 output_csv_file.close()
 
-
-print('Done!')
 
