@@ -4,6 +4,7 @@ import json
 import csv
 import os
 import sys
+import duckdb
 
 input_file_folder = sys.argv[1]
 
@@ -27,9 +28,9 @@ print(os.path.basename(file_name))
 
 output_csv_file = file_name + '.csv'
 
-
-# Read the ads-b.json file
-def read_ads_b_json(input_json_file, output_csv_file):
+# Read the ads-b.json file and return an array of records
+def read_ads_b_json(input_json_file):
+    records = []
     # Read the ads-b.json file
     with open(input_json_file) as f:
         data = json.load(f)
@@ -47,49 +48,86 @@ def read_ads_b_json(input_json_file, output_csv_file):
             if 'lat' in aircraft:
                 lat = aircraft['lat']
             else:
-                lat = ''
+                lat = 0
             if 'lon' in aircraft:
                 lon = aircraft['lon']
             else:
-                lon = ''
+                lon = 0
             if 'alt_baro' in aircraft:
                 alt_baro = aircraft['alt_baro']
             else:
-                alt_baro = ''
+                alt_baro = 0
             if 'alt_geom' in aircraft:
                 alt_geom = aircraft['alt_geom']
             else:
-                alt_geom = ''
+                alt_geom = 0
 
             if 'baro_rate' in aircraft:   
                 baro_rate = aircraft['baro_rate']
             else:
-                baro_rate = ''
+                baro_rate = 0
 
             if 'category' in aircraft:
                 category = aircraft['category']
             else:
-                category = ''
+                category = 'n/a'
 
             if 'track' in aircraft:
                 track = aircraft['track']
             else:
-                track = ''
+                track = 0
             
             if 'gs' in aircraft:
                 gs  = aircraft['gs']
             else:
-                gs = ''
+                gs = 0
 
             record = [timestamp, hex, flight, lat, lon, alt_baro, alt_geom, baro_rate, category, track, gs]
             
-            # Write to csv file
-            csv_writer = csv.writer(output_csv_file)
-            csv_writer.writerow(record)
+            records.append(record)
+        return records
+    
+# Write results to CSV file
+def write_to_csv_file(output_csv_file, record):
+    # Write to csv file
+    csv_writer = csv.writer(output_csv_file)
+    for record in records:
+        csv_writer.writerow(record)
 
-                
-        # print(aircraft['hex'])
-      
+# Create DuckDB database and ads table
+def create_duckdb_database():
+    # Create DuckDB database
+    con = duckdb.connect('ads.db')
+
+    # Create DuckDB table
+    con.execute('DROP TABLE IF EXISTS ads')
+
+    con.execute('CREATE TABLE ads (epoch DOUBLE, hex VARCHAR, flight VARCHAR, lat DOUBLE, lon DOUBLE, alt_baro int64, alt_geom int64, baro_rate int64, category VARCHAR, track DOUBLE, gs DOUBLE)')
+
+    # Close DuckDB connection
+    con.close()    
+
+# Write results to DuckDB
+def write_to_duckdb(records):
+    # Create DuckDB database
+    con = duckdb.connect('ads.db')
+
+    # Insert records into DuckDB table
+    for record in records:
+        con.execute('INSERT INTO ads VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', record)
+
+    # Query DuckDB table
+    con.execute('SELECT * FROM ads')
+
+    # Close DuckDB connection
+    con.close()
+
+# Print Records 
+def print_records(records):
+    for record in records:
+        print(record)
+
+
 # Create output csv file
 def create_csv_file():
     f = open('ads.csv', 'w')
@@ -101,9 +139,13 @@ def create_csv_file():
 
     return f 
 
-
 output_csv_file = create_csv_file()
-read_ads_b_json('ads.json', output_csv_file)
+records = read_ads_b_json('ads.json')
+
+#write_to_csv_file(output_csv_file, records)
+#print_records(records)
+write_to_duckdb(records)
+
 
 output_csv_file.close()
 
