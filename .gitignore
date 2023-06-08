@@ -1,3 +1,4 @@
 
 flights.db.wal
 ads.db
+*.wal
