@@ -14,7 +14,8 @@ def process_path():
     # Check if input_file_folder is a directory or a file
     if os.path.isdir(input_file_folder):
         print("is folder")
-        for file_name in os.listdir(input_file_folder):
+        for file_name in os.scandir(input_file_folder):
+            # print(file_name.path)
             file_path = os.path.join(input_file_folder, file_name)
             if os.path.isfile(file_path):
                 print(file_name)
@@ -41,56 +42,64 @@ def read_ads_b_json(input_json_file):
     with open(input_json_file) as f:
         data = json.load(f)
         # Loop through aircraft array
-        timestamp = data['now']
-        record   = []
 
-        for aircraft in data['aircraft']:
-            hex = aircraft['hex']
-            if 'flight' in aircraft:
-                flight = aircraft['flight'].strip()
-            else:
-                flight = ''
+        # Check if this is the right type of file
 
-            if 'lat' in aircraft:
-                lat = aircraft['lat']
-            else:
-                lat = 0
-            if 'lon' in aircraft:
-                lon = aircraft['lon']
-            else:
-                lon = 0
-            if 'alt_baro' in aircraft:
-                alt_baro = aircraft['alt_baro']
-            else:
-                alt_baro = 0
-            if 'alt_geom' in aircraft:
-                alt_geom = aircraft['alt_geom']
-            else:
-                alt_geom = 0
+        if "now" in data:
+            timestamp = data['now']
+            record   = []
 
-            if 'baro_rate' in aircraft:   
-                baro_rate = aircraft['baro_rate']
-            else:
-                baro_rate = 0
+            for aircraft in data['aircraft']:
+                hex = aircraft['hex']
+                if 'flight' in aircraft:
+                    flight = aircraft['flight'].strip()
+                else:
+                    flight = ''
 
-            if 'category' in aircraft:
-                category = aircraft['category']
-            else:
-                category = 'n/a'
+                if 'lat' in aircraft:
+                    lat = aircraft['lat']
+                else:
+                    lat = 0
+                if 'lon' in aircraft:
+                    lon = aircraft['lon']
+                else:
+                    lon = 0
+                if 'alt_baro' in aircraft:
+                    alt_baro = aircraft['alt_baro']
 
-            if 'track' in aircraft:
-                track = aircraft['track']
-            else:
-                track = 0
-            
-            if 'gs' in aircraft:
-                gs  = aircraft['gs']
-            else:
-                gs = 0
+                    # Trap Ground readings 
+                    if alt_baro == 'ground':
+                        alt_baro = 0
+                else:
+                    alt_baro = 0
+                if 'alt_geom' in aircraft:
+                    alt_geom = aircraft['alt_geom']
+                else:
+                    alt_geom = 0
 
-            record = [timestamp, hex, flight, lat, lon, alt_baro, alt_geom, baro_rate, category, track, gs]
-            
-            records.append(record)
+                if 'baro_rate' in aircraft:   
+                    baro_rate = aircraft['baro_rate']
+                else:
+                    baro_rate = 0
+
+                if 'category' in aircraft:
+                    category = aircraft['category']
+                else:
+                    category = 'n/a'
+
+                if 'track' in aircraft:
+                    track = aircraft['track']
+                else:
+                    track = 0
+                
+                if 'gs' in aircraft:
+                    gs  = aircraft['gs']
+                else:
+                    gs = 0
+
+                record = [timestamp, hex, flight, lat, lon, alt_baro, alt_geom, baro_rate, category, track, gs]
+                
+                records.append(record)
         return records
     
 # Write results to CSV file
@@ -152,11 +161,11 @@ def create_csv_file():
 # Look at the args and process path
 process_path()
 
-records = read_ads_b_json('ads.json')
+#records = read_ads_b_json('ads.json')
 
 #write_to_csv_file(output_csv_file, records)
 #print_records(records)
-write_to_duckdb(records)
+#write_to_duckdb(records)
 
 
 # output_csv_file.close()
