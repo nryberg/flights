@@ -9,23 +9,30 @@ import duckdb
 input_file_folder = sys.argv[1]
 
 # Check argv for input file and run single or directory mode
-def check_inputs():
-    if os.path.isabs(input_file_folder):
-        full_file_name = input_file_folder
+def process_path():
+     
+    # Check if input_file_folder is a directory or a file
+    if os.path.isdir(input_file_folder):
+        print("is folder")
+        for file_name in os.listdir(input_file_folder):
+            file_path = os.path.join(input_file_folder, file_name)
+            if os.path.isfile(file_path):
+                print(file_name)
+                process_file(file_path)
+
     else:
-    # Iterate through the current directory and find the file
+        print("is not a folder")
         full_file_name = os.path.basename(input_file_folder)
+        file_name = full_file_name.split('.')[0]
+        if len(sys.argv) > 2:
+            output_file_folder = sys.argv[2]
+            output_csv_file = output_file_folder + '/' + file_name + '.csv'
+        else:
+            output_csv_file = file_name + '.csv'
 
-    file_name = full_file_name.split('.')[0]
-
-    # Check for output file folder
-    # TODO Clean this output file folder code up
-    if len(sys.argv) > 2:
-        output_file_folder = sys.argv[2]
-        output_csv_file = output_file_folder + '/' + file_name + '.csv'
-    else:
-        output_csv_file = file_name + '.csv'
-
+def process_file(input_file_name):
+    records = read_ads_b_json(input_file_name)
+    write_to_duckdb(records)
 
 # Read the ads-b.json file and return an array of records
 def read_ads_b_json(input_json_file):
@@ -40,7 +47,7 @@ def read_ads_b_json(input_json_file):
         for aircraft in data['aircraft']:
             hex = aircraft['hex']
             if 'flight' in aircraft:
-                flight = aircraft['flight']
+                flight = aircraft['flight'].strip()
             else:
                 flight = ''
 
@@ -89,6 +96,7 @@ def read_ads_b_json(input_json_file):
 # Write results to CSV file
 def write_to_csv_file(output_csv_file, record):
     # Write to csv file
+    output_csv_file = create_csv_file()
     csv_writer = csv.writer(output_csv_file)
     for record in records:
         csv_writer.writerow(record)
@@ -138,7 +146,12 @@ def create_csv_file():
 
     return f 
 
-output_csv_file = create_csv_file()
+# Main
+#create_duckdb_database()
+
+# Look at the args and process path
+process_path()
+
 records = read_ads_b_json('ads.json')
 
 #write_to_csv_file(output_csv_file, records)
@@ -146,6 +159,6 @@ records = read_ads_b_json('ads.json')
 write_to_duckdb(records)
 
 
-output_csv_file.close()
+# output_csv_file.close()
 
 
