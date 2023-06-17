@@ -18,8 +18,10 @@ def process_path():
             # print(file_name.path)
             file_path = os.path.join(input_file_folder, file_name)
             if os.path.isfile(file_path):
-                print(file_name)
-                process_file(file_path)
+                print(file_name.name)
+                if file_name.name != '.DS_Store':
+                
+                    process_file(file_path)
 
     else:
         print("is not a folder")
