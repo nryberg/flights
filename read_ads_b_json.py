@@ -20,7 +20,6 @@ def process_path():
             if os.path.isfile(file_path):
                 print(file_name.name)
                 if file_name.name != '.DS_Store':
-                
                     process_file(file_path)
 
     else:
