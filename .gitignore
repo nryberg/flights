@@ -9,3 +9,4 @@ dump_1090_history.json
 dump_1090_history_processed.json
 test
 archive/dump1090_history.tar.gz
+.vscode/settings.json
