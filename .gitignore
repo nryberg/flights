@@ -4,3 +4,7 @@ ads.db
 *.wal
 dump1090
 *.pyc
+dump1090-fa
+dump_1090_history.json
+dump_1090_history_processed.json
+test
