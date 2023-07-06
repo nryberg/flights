@@ -6,14 +6,26 @@ with fix_ts as (
         concat(cast(ts_epoch_seconds as varchar(20)) , hex) as flight_index,
         flight,
         speed,
-        altitude,
+        -- 0 as altitude,
+        --cast(altitude as VARCHAR) as altitude,
+        case when altitude = 'ground' then 0 else cast(altitude as bigint) end as altitude,
         track,
         vertical_rate,
         aircraft_category,
         latitude,
         longitude
     from
-        'dump_1090_history_processed.json'
+        read_json_auto('dump_1090_history_processed.json', 
+        columns={ts_epoch_seconds: 'FLOAT', 
+        hex: 'VARCHAR', 
+        flight: 'VARCHAR', 
+        speed: 'INTEGER', 
+        altitude: 'VARCHAR', 
+        track: 'INTEGER', 
+        vertical_rate: 'INTEGER', 
+        aircraft_category: 'VARCHAR', 
+        latitude: 'FLOAT', 
+        longitude: 'FLOAT'})
 ),
 correct_timezone as (
     select
