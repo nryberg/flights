@@ -13,3 +13,6 @@ archive/dump1090_history.tar.gz
 flights.db
 flights.db
 flights 2.db
+flights.db
+*.db
+.DS_Store
