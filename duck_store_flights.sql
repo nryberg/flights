@@ -2,20 +2,20 @@
 -- into the flights table
 INSERT INTO flights 
 SELECT 
-    timestamp_cst,
-    timestamp_gmt,
-    ts_epoch_seconds,
-    hex ,
-    flight_index,
-    flight ,
-    speed ,
-    altitude ,
-    track ,
-    vertical_rate ,
-    aircraft_category ,
-    latitude ,
-    longitude
-from land_dump_1090
+    dm.timestamp_cst,
+    dm.timestamp_gmt,
+    dm.ts_epoch_seconds,
+    dm.hex ,
+    dm.flight_index,
+    dm.flight ,
+    dm.speed ,
+    dm.altitude ,
+    dm.track ,
+    dm.vertical_rate ,
+    dm.aircraft_category ,
+    dm.latitude ,
+    dm.longitude
+from land_dump_1090 as dm 
 LEFT JOIN flights
-ON flights.flight_index = land_dump_1090.flight_index
+ON flights.flight_index = dm.flight_index
 WHERE flights.flight_index IS NULL;
