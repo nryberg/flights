@@ -16,3 +16,5 @@ flights 2.db
 flights.db
 *.db
 .DS_Store
+*.db
+flights.db
