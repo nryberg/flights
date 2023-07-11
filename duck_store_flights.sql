@@ -16,8 +16,6 @@ SELECT
     latitude ,
     longitude
 from land_dump_1090
-WHERE NOT EXISTS (
-    SELECT 1
-    FROM flights
-    WHERE flights.flight_index = land_dump_1090.flight_index
-)
+LEFT JOIN flights
+ON flights.flight_index = land_dump_1090.flight_index
+WHERE flights.flight_index IS NULL;
