@@ -6,4 +6,4 @@ do
   cp "$file" "/home/nick/Documents/Develop/GitHub/nryberg/flights/archive/$NEW_FILENAME.json"
 done
 
-s3cmd put "/home/nick/Documents/Develop/GitHub/nryberg/flights/archive/*" s3://flights
+s3cmd sync "/home/nick/Documents/Develop/GitHub/nryberg/flights/archive/" s3://flights
