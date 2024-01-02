@@ -1,8 +1,8 @@
 // Process a JSON file and return a map of the data
 // Write the results to a csv file
 //
-// Usage: process_json.go <filename.json>
-// Example: process_json.go 1692416726.json
+// Usage: process_json.go -json=<filename.json> -header=true
+// Example: process_json.go 1692416726.json -header=true
 //
 
 // Pass in file name as argument
@@ -31,6 +31,8 @@ func main() {
 	// json_filename := os.Args[1]
 	json_filename := flag.String("json", "1692416726.json", "JSON filename")
 	print_header := flag.Bool("header", true, "Print header")
+	output_file := flag.String("output", "output.csv", "Output filename")
+	append := flag.Bool("append", false, "Append to output file")
 
 	flag.Parse()
 
@@ -47,8 +49,6 @@ func main() {
 
 	filename = strings.TrimSuffix(*json_filename, ".json")
 
-	// filename = strings.Split(json_filename, ".")[0]
-
 	fmt.Println(filename)
 
 	// defer the closing of our jsonFile so that we can parse it later on
@@ -57,14 +57,29 @@ func main() {
 	byteValue, _ := io.ReadAll(jsonFile)
 
 	// Open the csv file for writing
-	csv_filename := filename + ".csv"
-	fmt.Println(csv_filename)
-	csv_file, err := os.Create(csv_filename)
-	if err != nil {
-		panic(err)
-	}
-	defer csv_file.Close()
 
+	// csv_filename := filename + ".csv"  - Used for testing
+	csv_filename := *output_file
+	fmt.Println(csv_filename)
+	// Create a new file
+	var csv_file *os.File
+
+	if *append {
+		csv_file, err = os.Open(csv_filename)
+		if err != nil {
+			panic(err)
+		} else {
+			defer csv_file.Close()
+		}
+	} else {
+		csv_file, err = os.Create(csv_filename)
+		if err != nil {
+			panic(err)
+		} else {
+			defer csv_file.Close()
+		}
+	}
+	// csv_file, err := os.Create(csv_filename)
 	// Create a csv writer
 	csv_writer := csv.NewWriter(csv_file)
 	defer csv_writer.Flush()
