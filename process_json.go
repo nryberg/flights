@@ -19,6 +19,7 @@ package main
 import (
 	"encoding/csv"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"io"
 	"os"
@@ -27,29 +28,24 @@ import (
 
 func main() {
 
-	json_filename := os.Args[1]
+	// json_filename := os.Args[1]
+	json_filename := flag.String("json", "1692416726.json", "JSON filename")
+	print_header := flag.Bool("header", true, "Print header")
+
+	flag.Parse()
+
 	var filename string
 
 	// Open our jsonFile
-	jsonFile, err := os.Open(json_filename) // "1692416726.json")
+	jsonFile, err := os.Open(*json_filename) // "1692416726.json")
 	// if we os.Open returns an error then handle it
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-	fmt.Printf("Successfully Opened %s", json_filename)
+	fmt.Printf("Successfully Opened %s", *json_filename)
 
-	// Get filename without extension
-	// https://stackoverflow.com/questions/42538560/how-to-get-file-name-without-extension-in-go
-	// https://golang.org/pkg/strings/#Split
-	// https://golang.org/pkg/strings/#Fields
-	// https://golang.org/pkg/strings/#SplitAfter
-	// https://golang.org/pkg/strings/#SplitN
-	// https://golang.org/pkg/strings/#SplitAfterN
-	// https://golang.org/pkg/strings/#SplitAfterN
-	// https://golang.org/pkg/strings/#SplitN
-	//
-	filename = strings.TrimSuffix(json_filename, ".json")
+	filename = strings.TrimSuffix(*json_filename, ".json")
 
 	// filename = strings.Split(json_filename, ".")[0]
 
@@ -74,21 +70,21 @@ func main() {
 	defer csv_writer.Flush()
 
 	// Write Headers
-	csv_writer.Write([]string{"Now", "Hex", "Flight", "Lat", "Lon", "Alt", "Track", "Speed", "Squawk", "Radar", "Messages", "Groundspeed", "Altitude", "Rate_of_climb", "Category"})
+	if *print_header {
+		csv_writer.Write([]string{"Now", "Hex", "Flight", "Lat", "Lon", "Alt", "Track", "Speed", "Squawk", "Radar", "Messages", "Groundspeed", "Altitude", "Rate_of_climb", "Category"})
+	}
 
 	type Aircraft struct {
 		Hex           string  `json:"hex"`
 		Flight        string  `json:"flight"`
 		Lat           float64 `json:"lat"`
 		Lon           float64 `json:"lon"`
-		Alt           int     `json:"alt"`
+		Alt           int     `json:"alt_baro"`
 		Track         float64 `json:"track"`
-		Speed         int     `json:"speed"`
+		Speed         float64 `json:"gs"`
 		Squawk        string  `json:"squawk"`
 		Radar         string  `json:"radar"`
 		Messages      int     `json:"messages"`
-		Groundspeed   float64 `json:"gs"`
-		Altitude      int     `json:"alt_baro"`
 		Rate_of_climb int     `json:"baro_rate"`
 		Category      string  `json:"category"`
 	}
@@ -119,20 +115,25 @@ func main() {
 	for i := 0; i < len(data.Aircraft); i++ {
 
 		timestamp := fmt.Sprintf("%f", data.Now)
+		hex := data.Aircraft[i].Hex
+		flight := data.Aircraft[i].Flight
 		lat := fmt.Sprintf("%f", data.Aircraft[i].Lat)
 		lon := fmt.Sprintf("%f", data.Aircraft[i].Lon)
 		alt := fmt.Sprintf("%d", data.Aircraft[i].Alt)
 		track := fmt.Sprintf("%f", data.Aircraft[i].Track)
-		speed := fmt.Sprintf("%d", data.Aircraft[i].Speed)
+		speed := fmt.Sprintf("%f", data.Aircraft[i].Speed)
+		squawk := data.Aircraft[i].Squawk
+		radar := data.Aircraft[i].Radar
 		messages := fmt.Sprintf("%d", data.Aircraft[i].Messages)
-		groundspeed := fmt.Sprintf("%f", data.Aircraft[i].Groundspeed)
-		altitude := fmt.Sprintf("%d", data.Aircraft[i].Altitude)
+		groundspeed := fmt.Sprintf("%f", data.Aircraft[i].Speed)
+		altitude := fmt.Sprintf("%d", data.Aircraft[i].Alt)
 		rate_of_climb := fmt.Sprintf("%d", data.Aircraft[i].Rate_of_climb)
+		category := data.Aircraft[i].Category
 
 		// Write to csv file
 		// csv_writer.Write([]string{"Now", "Hex", "Flight", "Lat", "Lon", "Alt", "Track", "Speed", "Squawk", "Radar", "Messages", "Groundspeed", "Altitude", "Rate_of_climb", "Category"})
 		//
-		csv_writer.Write([]string{timestamp, data.Aircraft[i].Hex, data.Aircraft[i].Flight, lat, lon, alt, track, speed, data.Aircraft[i].Squawk, data.Aircraft[i].Radar, messages, groundspeed, altitude, rate_of_climb, data.Aircraft[i].Category})
+		csv_writer.Write([]string{timestamp, hex, flight, lat, lon, alt, track, speed, squawk, radar, messages, groundspeed, altitude, rate_of_climb, category})
 		//
 	}
 	fmt.Println("End")
