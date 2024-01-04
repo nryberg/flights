@@ -5,14 +5,12 @@
 // Example: process_json.go 1692416726.json -header=true
 //
 
-// Pass in file name as argument
-// Check if file exists
-// If file exists
-
-// Open file
-// Read file
-// Parse file
-// Write to csv file
+// TODO : Add support for multiple json files
+//        Flag for a folder and then iterate
+//        You need to pull most of the functionality out
+//        of main and into a proper function (or two or three)
+//        This will make it easier to read and understand
+//        and test.   01/04/2024
 
 package main
 
