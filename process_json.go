@@ -24,66 +24,55 @@ import (
 	"strings"
 )
 
-func main() {
-
-	// json_filename := os.Args[1]
-	json_filename := flag.String("json", "1692416726.json", "JSON filename")
-	print_header := flag.Bool("header", true, "Print header")
-	output_file := flag.String("output", "output.csv", "Output filename")
-	append := flag.Bool("append", false, "Append to output file")
-
-	flag.Parse()
-
-	var filename string
-
-	// Open our jsonFile
-	jsonFile, err := os.Open(*json_filename) // "1692416726.json")
+func get_json_data(json_filename string) ([]byte, error) {
+	jsonFile, err := os.Open(json_filename) // "1692416726.json")
 	// if we os.Open returns an error then handle it
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		return nil, err
 	}
-	fmt.Printf("Successfully Opened %s", *json_filename)
+	fmt.Printf("Successfully Opened %s", json_filename)
 
-	filename = strings.TrimSuffix(*json_filename, ".json")
+	filename := strings.TrimSuffix(json_filename, ".json")
 
 	fmt.Println(filename)
 
 	// defer the closing of our jsonFile so that we can parse it later on
 	defer jsonFile.Close()
 	// read our opened xmlFile as a byte array.
-	byteValue, _ := io.ReadAll(jsonFile)
+	byteValue, err := io.ReadAll(jsonFile)
+	if err != nil {
+		return nil, err
+	} else {
+		return byteValue, nil
+	}
 
-	// Open the csv file for writing
+}
 
-	// csv_filename := filename + ".csv"  - Used for testing
-	csv_filename := *output_file
-	fmt.Println(csv_filename)
-	// Create a new file
+func open_csv_file(csv_filename string, append bool) (*os.File, error) {
 	var csv_file *os.File
+	var err error
 
-	if *append {
+	if append {
 		csv_file, err = os.Open(csv_filename)
 		if err != nil {
-			panic(err)
+			return nil, err
 		} else {
-			defer csv_file.Close()
+			return csv_file, nil
 		}
 	} else {
 		csv_file, err = os.Create(csv_filename)
 		if err != nil {
-			panic(err)
+			return nil, err
 		} else {
-			defer csv_file.Close()
+			return csv_file, nil
 		}
 	}
-	// csv_file, err := os.Create(csv_filename)
-	// Create a csv writer
-	csv_writer := csv.NewWriter(csv_file)
-	defer csv_writer.Flush()
+}
 
+func process_json(json_data []byte, csv_writer csv.Writer, print_header bool, append bool) error {
+	var err error
 	// Write Headers
-	if *print_header {
+	if print_header {
 		csv_writer.Write([]string{"Now", "Hex", "Flight", "Lat", "Lon", "Alt", "Track", "Speed", "Squawk", "Radar", "Messages", "Groundspeed", "Altitude", "Rate_of_climb", "Category"})
 	}
 
@@ -116,7 +105,7 @@ func main() {
 
 	// we unmarshal our byteArray which contains our
 	// jsonFile's content into 'users' which we defined above
-	err = json.Unmarshal(byteValue, &data)
+	err = json.Unmarshal(json_data, &data)
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -144,10 +133,52 @@ func main() {
 		category := data.Aircraft[i].Category
 
 		// Write to csv file
-		// csv_writer.Write([]string{"Now", "Hex", "Flight", "Lat", "Lon", "Alt", "Track", "Speed", "Squawk", "Radar", "Messages", "Groundspeed", "Altitude", "Rate_of_climb", "Category"})
 		//
 		csv_writer.Write([]string{timestamp, hex, flight, lat, lon, alt, track, speed, squawk, radar, messages, groundspeed, altitude, rate_of_climb, category})
 		//
 	}
-	fmt.Println("End")
+	if err != nil {
+		return err
+	} else {
+		return nil
+	}
+}
+
+func main() {
+
+	// json_filename := os.Args[1]
+	json_filename := flag.String("json", "1692416726.json", "JSON filename")
+	print_header := flag.Bool("header", true, "Print header")
+	output_file := flag.String("output", "output.csv", "Output filename")
+	append := flag.Bool("append", false, "Append to output file")
+
+	flag.Parse()
+
+	// Open the csv file for writing
+	csv_filename := *output_file
+
+	csv_file, err := open_csv_file(csv_filename, *append)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	defer csv_file.Close()
+
+	// Create a csv writer
+	csv_writer := csv.NewWriter(csv_file)
+	defer csv_writer.Flush()
+
+	// Open our jsonFile
+	json_data, err := get_json_data(*json_filename)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	err = process_json(json_data, *csv_writer, *print_header, *append)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	fmt.Println("Done")
 }
