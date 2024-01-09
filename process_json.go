@@ -21,7 +21,9 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"strings"
+	"path"
+	"path/filepath"
+	"strconv"
 )
 
 func get_json_data(json_filename string) ([]byte, error) {
@@ -30,11 +32,11 @@ func get_json_data(json_filename string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	fmt.Printf("Successfully Opened %s", json_filename)
+	// fmt.Printf("Successfully Opened %s", json_filename)
 
-	filename := strings.TrimSuffix(json_filename, ".json")
+	// filename := strings.TrimSuffix(json_filename, ".json")
 
-	fmt.Println(filename)
+	// fmt.Println(filename)
 
 	// defer the closing of our jsonFile so that we can parse it later on
 	defer jsonFile.Close()
@@ -69,11 +71,44 @@ func open_csv_file(csv_filename string, append bool) (*os.File, error) {
 	}
 }
 
+// FlexInt papers over the problem of
+// having types flip flop in JSON
+// which they can do. It's JSON after all.
+type FlexInt int
+
+// For FlexInt only, we're overriding
+// the default JSON unmarshaling
+// to handle the "ground" case.
+func (fi *FlexInt) UnmarshalJSON(b []byte) error {
+	if b[0] != '"' {
+		return json.Unmarshal(b, (*int)(fi))
+	}
+	var s string
+	// var i int
+	// var err error
+	if err := json.Unmarshal(b, &s); err != nil {
+		return err
+	}
+	if s == "ground" {
+		i := 0
+		*fi = FlexInt(i)
+	} else {
+		i, err := strconv.Atoi(s)
+		if err != nil {
+			return err
+		} else {
+			*fi = FlexInt(i)
+		}
+	}
+
+	return nil
+}
+
 func process_json(json_data []byte, csv_writer csv.Writer, print_header bool, append bool) error {
 	var err error
 	// Write Headers
 	if print_header {
-		csv_writer.Write([]string{"Now", "Hex", "Flight", "Lat", "Lon", "Alt", "Track", "Speed", "Squawk", "Radar", "Messages", "Groundspeed", "Altitude", "Rate_of_climb", "Category"})
+		csv_writer.Write([]string{"Now", "Hex", "Flight", "Lat", "Lon", "Alt", "Track", "Speed", "Squawk", "Messages", "Groundspeed", "Rate_of_climb", "Category"})
 	}
 
 	type Aircraft struct {
@@ -81,11 +116,10 @@ func process_json(json_data []byte, csv_writer csv.Writer, print_header bool, ap
 		Flight        string  `json:"flight"`
 		Lat           float64 `json:"lat"`
 		Lon           float64 `json:"lon"`
-		Alt           int     `json:"alt_baro"`
+		Alt           FlexInt `json:"alt_baro"`
 		Track         float64 `json:"track"`
 		Speed         float64 `json:"gs"`
 		Squawk        string  `json:"squawk"`
-		Radar         string  `json:"radar"`
 		Messages      int     `json:"messages"`
 		Rate_of_climb int     `json:"baro_rate"`
 		Category      string  `json:"category"`
@@ -113,7 +147,7 @@ func process_json(json_data []byte, csv_writer csv.Writer, print_header bool, ap
 	// print out the user Type, their name, and their facebook url
 	// as just an example
 	//
-	fmt.Println("Start")
+	// fmt.Println("Start")
 	for i := 0; i < len(data.Aircraft); i++ {
 
 		timestamp := fmt.Sprintf("%f", data.Now)
@@ -122,19 +156,19 @@ func process_json(json_data []byte, csv_writer csv.Writer, print_header bool, ap
 		lat := fmt.Sprintf("%f", data.Aircraft[i].Lat)
 		lon := fmt.Sprintf("%f", data.Aircraft[i].Lon)
 		alt := fmt.Sprintf("%d", data.Aircraft[i].Alt)
+		// alt := data.Aircraft[i].Alt
 		track := fmt.Sprintf("%f", data.Aircraft[i].Track)
 		speed := fmt.Sprintf("%f", data.Aircraft[i].Speed)
 		squawk := data.Aircraft[i].Squawk
-		radar := data.Aircraft[i].Radar
 		messages := fmt.Sprintf("%d", data.Aircraft[i].Messages)
 		groundspeed := fmt.Sprintf("%f", data.Aircraft[i].Speed)
-		altitude := fmt.Sprintf("%d", data.Aircraft[i].Alt)
+		// altitude := fmt.Sprintf("%d", data.Aircraft[i].Alt)
 		rate_of_climb := fmt.Sprintf("%d", data.Aircraft[i].Rate_of_climb)
 		category := data.Aircraft[i].Category
 
 		// Write to csv file
 		//
-		csv_writer.Write([]string{timestamp, hex, flight, lat, lon, alt, track, speed, squawk, radar, messages, groundspeed, altitude, rate_of_climb, category})
+		csv_writer.Write([]string{timestamp, hex, flight, lat, lon, alt, track, speed, squawk, messages, groundspeed, rate_of_climb, category})
 		//
 	}
 	if err != nil {
@@ -166,19 +200,69 @@ func main() {
 
 	// Create a csv writer
 	csv_writer := csv.NewWriter(csv_file)
+
+	// Hang on to the fact it's the first
+	// file so we don't repeat the
+	// header later on
+	is_first_file := true
+
 	defer csv_writer.Flush()
 
-	// Open our jsonFile
-	json_data, err := get_json_data(*json_filename)
+	// Test to see if json_filename is a folder or a file
+	//
+	file_path, err := os.Stat(*json_filename)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
+	} else {
+		if file_path.IsDir() {
+			files, err := os.ReadDir(*json_filename)
+			// Read the directory.
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
+
+			// Iterate over the files.
+			for _, file := range files {
+				if file.IsDir() {
+					fmt.Println("Have folder:" + file.Name())
+				} else {
+					// Make sure it's JSON extension
+					extension := filepath.Ext(file.Name())
+					if *print_header == true {
+						print_header = &is_first_file
+					}
+					if extension == ".json" {
+						full_path := path.Join(*json_filename, file.Name())
+
+						json_data, err := get_json_data(full_path)
+						err = process_json(json_data, *csv_writer, *print_header, true)
+						if err != nil {
+							fmt.Println(err)
+							os.Exit(1)
+						}
+					}
+				}
+				is_first_file = false
+			}
+			os.Exit(1)
+		} else {
+			// Open our jsonFile
+			json_data, err := get_json_data(*json_filename)
+			if err != nil {
+				fmt.Println(err)
+				os.Exit(1)
+			}
+
+			err = process_json(json_data, *csv_writer, *print_header, *append)
+			if err != nil {
+				fmt.Println(err)
+				os.Exit(1)
+			}
+		}
+
 	}
 
-	err = process_json(json_data, *csv_writer, *print_header, *append)
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
 	fmt.Println("Done")
 }
