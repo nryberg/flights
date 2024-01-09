@@ -24,6 +24,7 @@ import (
 	"path"
 	"path/filepath"
 	"strconv"
+	"time"
 )
 
 func get_json_data(json_filename string) ([]byte, error) {
@@ -108,7 +109,7 @@ func process_json(json_data []byte, csv_writer csv.Writer, print_header bool, ap
 	var err error
 	// Write Headers
 	if print_header {
-		csv_writer.Write([]string{"Now", "Hex", "Flight", "Lat", "Lon", "Alt", "Track", "Speed", "Squawk", "Messages", "Groundspeed", "Rate_of_climb", "Category"})
+		csv_writer.Write([]string{"Now", "Hex", "Flight", "Lat", "Lon", "Alt", "Track", "Speed", "Squawk", "Messages", "Groundspeed", "Rate_of_climb", "Category", "Time"})
 	}
 
 	type Aircraft struct {
@@ -150,7 +151,7 @@ func process_json(json_data []byte, csv_writer csv.Writer, print_header bool, ap
 	// fmt.Println("Start")
 	for i := 0; i < len(data.Aircraft); i++ {
 
-		timestamp := fmt.Sprintf("%f", data.Now)
+		now := fmt.Sprintf("%f", data.Now)
 		hex := data.Aircraft[i].Hex
 		flight := data.Aircraft[i].Flight
 		lat := fmt.Sprintf("%f", data.Aircraft[i].Lat)
@@ -166,9 +167,13 @@ func process_json(json_data []byte, csv_writer csv.Writer, print_header bool, ap
 		rate_of_climb := fmt.Sprintf("%d", data.Aircraft[i].Rate_of_climb)
 		category := data.Aircraft[i].Category
 
+		t := time.Unix(int64(data.Now), 0)
+		timestamp := t.Format(time.RFC3339)
+		fmt.Println(timestamp)
+
 		// Write to csv file
 		//
-		csv_writer.Write([]string{timestamp, hex, flight, lat, lon, alt, track, speed, squawk, messages, groundspeed, rate_of_climb, category})
+		csv_writer.Write([]string{now, hex, flight, lat, lon, alt, track, speed, squawk, messages, groundspeed, rate_of_climb, category, timestamp})
 		//
 	}
 	if err != nil {
