@@ -169,7 +169,7 @@ func process_json(json_data []byte, csv_writer csv.Writer, print_header bool, ap
 
 		t := time.Unix(int64(data.Now), 0)
 		timestamp := t.Format(time.RFC3339)
-		fmt.Println(timestamp)
+		// fmt.Println(timestamp)
 
 		// Write to csv file
 		//
