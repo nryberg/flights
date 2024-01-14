@@ -24,6 +24,7 @@ import (
 	"path"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -51,7 +52,7 @@ func get_json_data(json_filename string) ([]byte, error) {
 
 }
 
-func open_csv_file(csv_filename string, append bool) (*os.File, error) {
+func open_csv_file(csv_filename string, append bool) (*csv.Writer, error) {
 	var csv_file *os.File
 	var err error
 
@@ -60,14 +61,16 @@ func open_csv_file(csv_filename string, append bool) (*os.File, error) {
 		if err != nil {
 			return nil, err
 		} else {
-			return csv_file, nil
+			csv_writer := csv.NewWriter(csv_file)
+			return csv_writer, nil
 		}
 	} else {
 		csv_file, err = os.Create(csv_filename)
 		if err != nil {
 			return nil, err
 		} else {
-			return csv_file, nil
+			csv_writer := csv.NewWriter(csv_file)
+			return csv_writer, nil
 		}
 	}
 }
@@ -193,25 +196,10 @@ func main() {
 
 	flag.Parse()
 
-	// Open the csv file for writing
-	csv_filename := *output_file
-
-	csv_file, err := open_csv_file(csv_filename, *append)
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
-	defer csv_file.Close()
-
-	// Create a csv writer
-	csv_writer := csv.NewWriter(csv_file)
-
 	// Hang on to the fact it's the first
 	// file so we don't repeat the
 	// header later on
 	is_first_file := true
-
-	defer csv_writer.Flush()
 
 	// Test to see if json_filename is a folder or a file
 	//
@@ -229,6 +217,12 @@ func main() {
 			}
 
 			// Iterate over the files.
+			first_file := files[0].Name()
+			last_file := files[len(files)-1].Name()
+			out_file_name := strings.Split(first_file, ".")[0] + "-" + strings.Split(last_file, ".")[0] + ".csv"
+
+			csv_writer, err := open_csv_file(out_file_name, *append)
+			defer csv_writer.Flush()
 			for _, file := range files {
 				if file.IsDir() {
 					fmt.Println("Have folder:" + file.Name())
@@ -254,16 +248,19 @@ func main() {
 			os.Exit(1)
 		} else {
 			// Open our jsonFile
-			json_data, err := get_json_data(*json_filename)
+			csv_writer, err := open_csv_file(*output_file, *append)
+			defer csv_writer.Flush()
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)
-			}
+			} else {
+				json_data, err := get_json_data(*json_filename)
+				err = process_json(json_data, *csv_writer, *print_header, *append)
+				if err != nil {
+					fmt.Println(err)
+					os.Exit(1)
+				}
 
-			err = process_json(json_data, *csv_writer, *print_header, *append)
-			if err != nil {
-				fmt.Println(err)
-				os.Exit(1)
 			}
 		}
 
