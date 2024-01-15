@@ -112,7 +112,7 @@ func process_json(json_data []byte, csv_writer csv.Writer, print_header bool, ap
 	var err error
 	// Write Headers
 	if print_header {
-		csv_writer.Write([]string{"Now", "Hex", "Flight", "Lat", "Lon", "Alt", "Track", "Speed", "Squawk", "Messages", "Groundspeed", "Rate_of_climb", "Category", "Time"})
+		csv_writer.Write([]string{"ts_epoch", "Hex", "Flight", "Lat", "Lon", "Alt", "Track", "Speed", "Squawk", "Messages", "Groundspeed", "Rate_of_climb", "af_category", "ts_iso8601"})
 	}
 
 	type Aircraft struct {
