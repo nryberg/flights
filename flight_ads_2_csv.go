@@ -192,7 +192,10 @@ func main() {
 	json_filename := flag.String("json", "1692416726.json", "JSON filename")
 	print_header := flag.Bool("header", true, "Print header")
 	output_file := flag.String("output", "output.csv", "Output filename")
+	output_folder := flag.String("output_folder", "./", "Output folder")
 	append := flag.Bool("append", false, "Append to output file")
+
+	output_file_path := *output_folder + *output_file
 
 	flag.Parse()
 
@@ -220,8 +223,8 @@ func main() {
 			first_file := files[0].Name()
 			last_file := files[len(files)-1].Name()
 			out_file_name := strings.Split(first_file, ".")[0] + "-" + strings.Split(last_file, ".")[0] + ".csv"
-
-			csv_writer, err := open_csv_file(out_file_name, *append)
+			out_file_path := *output_folder + out_file_name
+			csv_writer, err := open_csv_file(out_file_path, *append)
 			defer csv_writer.Flush()
 			for _, file := range files {
 				if file.IsDir() {
@@ -245,10 +248,11 @@ func main() {
 				}
 				is_first_file = false
 			}
+			csv_writer.Flush()
 			os.Exit(1)
 		} else {
 			// Open our jsonFile
-			csv_writer, err := open_csv_file(*output_file, *append)
+			csv_writer, err := open_csv_file(output_file_path, *append)
 			defer csv_writer.Flush()
 			if err != nil {
 				fmt.Println(err)
@@ -260,8 +264,8 @@ func main() {
 					fmt.Println(err)
 					os.Exit(1)
 				}
-
 			}
+			csv_writer.Flush()
 		}
 
 	}
