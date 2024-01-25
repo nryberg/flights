@@ -15,7 +15,6 @@ for i in ${IMPFILES[@]}
     done
 
 psql $PG_LITTLEBOX -c "
-delete from  flights;
 
 with landing as 
 (
@@ -51,7 +50,6 @@ delete from flight_landing ;"
 
 
 psql $PG_NEON -c "
-delete from  flights;
 
 with landing as 
 (
