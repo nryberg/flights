@@ -1,3 +1,6 @@
 #!/bin/bash
 
-7z a /Users/nick/Documents/GitHub/nryberg/flights/flight_data.7z /Users/nick/Documents/GitHub/nryberg/flights/data/*.json
+root='/Users/nick/Documents/GitHub/nryberg/flights'  # Mac
+root='/home/nick/develop/GitHub/nryberg/flights'  # Littlebox
+
+7z a $root/flight_data.7z $root/data/*.json
