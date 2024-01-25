@@ -20,3 +20,7 @@ flights.db
 flights.db
 archive
 process_json
+/data
+process_json
+*.csv
+flight_ads_2_csv
