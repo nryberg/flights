@@ -68,3 +68,15 @@ And accept the fact that I'm not really doing anything with this.
 ### Flight Lookup 
 
 Implement some sort of Python flight data capture up to a limit
+
+# Database Load
+
+1. Pull from Minio 
+2. Process to CSV
+3. Load CSV to Database
+4. Archive Data (if need be)
+5. Move the JSON to a second folder
+6. Remove JSON from Minio (do I have to at this point?)
+7. Remove JSON from Local
+8. Celebrate
+
